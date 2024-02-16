@@ -20,6 +20,6 @@ logging.basicConfig(level=logging.INFO,
 if __name__ == "__main__":
     logging.info("Demo logging activity")
     abc = [1, 2, 3, 4]
-    from src.CreditCardDefaultsPrediction.utils.utils import save_object
+    from src.CreditCardDefaulsPrediction.utils.utils import save_object
 
     save_object(os.path.join('logs', 'loggger.pkl'), abc)
