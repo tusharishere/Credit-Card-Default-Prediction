@@ -1,0 +1,5 @@
+artifacts\preprocessor.pkl.dvc/raw.csv
+/test.csv
+/train.csv
+/val.csv
+/preprocessor.pkl
