@@ -1,0 +1,15 @@
+dataclasses
+pandas
+numpy
+scikit-learn
+ipykernel
+seaborn
+statsmodels
+imblearn
+mlflow
+flask
+pymongo[srv]
+gunicorn
+xgboost
+
+-e .
