@@ -1,4 +1,3 @@
-# utils.py
 from cProfile import label
 import gzip
 import mlflow
@@ -42,7 +41,7 @@ class Utils:
                 pickle.dump(obj, file_obj)
                 logging.info(f"File is saved at '{file_path}' successfully.")
         except Exception as e:
-            logging.error("Exception occured during saving object")
+            logging.error("Exception occurred during saving object")
             raise CustomException(e, sys)
 
     def load_object(self, file_path: str):
@@ -57,7 +56,7 @@ class Utils:
                 logging.info(f"File at '{file_path}' has been successfully loaded.")
                 return pickle.load(file_obj)                
         except Exception as e:
-            logging.error("Exception occured during loading object")
+            logging.error("Exception occurred during loading object")
             raise CustomException(e, sys)
 
     def delete_object(self, file_path: str):
@@ -76,7 +75,7 @@ class Utils:
             else:
                 logging.info(f"File at '{file_path}' does not exist.")
         except Exception as e:
-            logging.error("Exception occured during deleting object")
+            logging.error("Exception occurred during deleting object")
             raise CustomException(e, sys)
 
     def run_data_pipeline(self, data_processor, path: str = None, filename: str = None, **kwargs):
@@ -135,97 +134,60 @@ class Utils:
             'recall': recall,
             'roc_auc': roc_auc}
         
-    def evaluate_models_with_hyperparameter(self, models: dict, train_features, train_label, test_features, test_label, metric='accuracy', verbose=0):
+    def evaluate_models(self, models: dict, train_features, train_label, test_features, test_label, metric='roc_auc', verbose=0):
         """
-        The evaluate_models function takes in a tuple of models and their parameters, 
-        train_features, train_label, val_features and val_label. It then uses the RandomizedSearchCV function to find the best model for each model passed into it.
-        
-        :param models: tuple: Models and their parameters
-        :param train_features: DataFrame: Training features to the evaluate_models function
-        :param train_label: DataFrame: Trtaining labels to the predict function
-        :param val_features: DataFrame: Validation features to the evaluate_models function
-        :param val_label: Validation labels to the predict function
-        :return: tuple: The best model and a dictionary of the model report
-        """         
-        np.random.seed(42)        
+        The evaluate_models function takes in a dictionary of models and their hyperparameters,
+        train_features, train_label, test_features, and test_label. It then uses RandomizedSearchCV
+        to find the best model for each model passed into it.
+
+        :param models: dict: Models and their hyperparameters
+        :param train_features: DataFrame: Training features
+        :param train_label: DataFrame: Training labels
+        :param test_features: DataFrame: Test features
+        :param test_label: DataFrame: Test labels
+        :param metric: str: Evaluation metric (default='roc_auc')
+        :return: tuple: The best model
+        """
+        np.random.seed(42)
+        self.MODEL_REPORT = {}
         TRAINING_SCORE = {}
 
-        def log_params_with_prefix(prefix, params):
-            """Log parameters with a given prefix to avoid conflicts."""
-            for key, value in params.items():
-                log_key = f"{prefix}_{key}"
-                mlflow.log_param(log_key, value)
-                
         for model_name, (model, params) in models.items():
-
-            with mlflow.start_run(run_id=mlflow_setup.get_active_run_id(), nested=True):               
-                logging.info("\n\n========================= {} =======================".format(model_name))
-
-                random_search_cv = RandomizedSearchCV(estimator=model, param_distributions=params, n_iter=5, scoring=metric, n_jobs=-1, cv=5, verbose=verbose, random_state=5)
-
-                start_time = self.timer(None)
-                random_search_cv.fit(train_features, train_label)
-                self.timer(start_time)
-
-                logging.info("BEST PARAMS: {}".format(random_search_cv.best_params_))
-                log_params_with_prefix(model_name, random_search_cv.best_params_)
-
-                logging.info("BEST TRAINING SCORE USING HYPER-PARAMTERS: {}".format(round(random_search_cv.best_score_, 2)))
-                TRAINING_SCORE[model_name] = round(random_search_cv.best_score_, 2)
-
-                mlflow.log_metric("{} score".format(metric), round(random_search_cv.best_score_, 2))
-
-                self.predict(model_name=model_name, model=random_search_cv.best_estimator_, features=test_features, label=test_label)
-                
-        logging.info("All training scores: {}".format(TRAINING_SCORE))
-        logging.info("All testing scores: {}".format(self.MODEL_REPORT))
-
-        SCORES = []
-        for model_name, values in self.MODEL_REPORT.items():
-            for metric_name, score in values.items():
-                if metric_name == metric:
-                    SCORES.append((model_name, score))        
-
-        best_score = sorted(SCORES, reverse=True)[0][1]
-        best_model_name = sorted(SCORES, reverse=True)[0][0]                
-        best_model = [values['model'] for model_name, values in self.MODEL_REPORT.items() if model_name == best_model_name][0]
-
-        logging.info("BEST MODEL: {}".format(best_model_name))
-        logging.info("BEST SCORE: {}".format(best_score))
-
-        return best_model
-    
-    def evaluate_models(self, models: dict, train_features, train_label, test_features, test_label, metric='accuracy'):
-        """
-        The evaluate_models function takes in a tuple of models and their parameters, 
-        train_features, train_label, val_features and val_label. It then uses the RandomizedSearchCV function to find the best model for each model passed into it.
-        
-        :param models: tuple: Models and their parameters
-        :param train_features: DataFrame: Training features to the evaluate_models function
-        :param train_label: DataFrame: Trtaining labels to the predict function
-        :param val_features: DataFrame: Validation features to the evaluate_models function
-        :param val_label: Validation labels to the predict function
-        :return: tuple: The best model and a dictionary of the model report
-        """
-         
-        np.random.seed(42)        
-        self.MODEL_REPORT = {}
-        for model_name, model in models.items():            
             logging.info("\n\n========================= {} =======================".format(model_name))
 
-            start_time = self.timer(None)
-            model.fit(train_features, train_label)
-            self.timer(start_time)
+            # Perform hyperparameter tuning using RandomizedSearchCV
+            random_search = RandomizedSearchCV(estimator=model, param_distributions=params, n_iter=5, scoring=metric, cv=5, n_jobs=-1)
+            random_search.fit(train_features, train_label)
 
-            # Evaluate the best model on the train & test set
-            self.predict(model_name=model_name, model=model, features=test_features, label=test_label)
-            
+            # Get the best model
+            best_model = random_search.best_estimator_
+
+            # Evaluate the best model on the test set
+            best_model_pred = best_model.predict(test_features)
+            if metric == 'roc_auc':
+                score = roc_auc_score(test_label, best_model_pred)
+            elif metric == 'accuracy':
+                score = accuracy_score(test_label, best_model_pred)
+            else:
+                raise ValueError("Unsupported metric")
+
+            # Record model performance in MODEL_REPORT
+            self.MODEL_REPORT[model_name] = {
+                'model': best_model,
+                metric: score,
+                'params': random_search.best_params_
+            }
+            TRAINING_SCORE[model_name] = random_search.best_score_
+
         logging.info("Model Report: {}".format(self.MODEL_REPORT))
-        best_model_score = max(sorted(model[metric] for model in self.MODEL_REPORT.values()))
-        best_model_name = list(self.MODEL_REPORT.keys())[list(model[metric] for model in self.MODEL_REPORT.values()).index(best_model_score)]
+        logging.info("Training Scores: {}".format(TRAINING_SCORE))
+
+        # Find the best model based on the given metric
+        best_model_name = max(self.MODEL_REPORT, key=lambda x: self.MODEL_REPORT[x][metric])
         best_model = self.MODEL_REPORT[best_model_name]['model']
-        model_report = self.MODEL_REPORT[best_model_name]
-        print("BEST MODEL REPORT: ", model_report)   
+
+        logging.info("BEST MODEL REPORT: {}".format(self.MODEL_REPORT[best_model_name]))
+
         return best_model
 
     def smote_balance(self, data):
@@ -244,7 +206,6 @@ class Utils:
         data = pd.concat([pd.DataFrame(X_resampled), pd.DataFrame(y_resampled)], axis=1)
         logging.info('Dataset shape after resampling: {}'.format(data.shape[0]))
         return data
-
 
 
 if __name__ == "__main__":
