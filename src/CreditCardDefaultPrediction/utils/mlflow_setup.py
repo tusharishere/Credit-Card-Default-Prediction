@@ -2,14 +2,14 @@ import mlflow
 
 
 def setup_mlflow_experiment():
-    experiment_name = "credit_card_default_detection"
+    experiment_name = "Credit-Card-Default-Prediction"
     mlflow.set_experiment(experiment_name)
     experiment = mlflow.get_experiment_by_name(experiment_name)
     return experiment
 
 
 def start_mlflow_run():
-    experiment_name = "credit_card_default_detection"
+    experiment_name = "Credit-Card-Default-Prediction"
     mlflow.set_experiment(experiment_name)
     return mlflow.start_run()
 
