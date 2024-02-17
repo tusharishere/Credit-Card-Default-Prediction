@@ -3,6 +3,7 @@ from cProfile import label
 import gzip
 import mlflow
 import mlflow.sklearn
+import dagshub
 import pickle
 import sys
 import os
@@ -10,7 +11,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from time import time
-from pymongo.mongo_client import MongoClient
+
 from src.CreditCardDefaultPrediction.exception import CustomException
 from src.CreditCardDefaultPrediction.logger import logging
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, cross_val_score
@@ -205,7 +206,8 @@ class Utils:
         :param val_features: DataFrame: Validation features to the evaluate_models function
         :param val_label: Validation labels to the predict function
         :return: tuple: The best model and a dictionary of the model report
-        """ 
+        """
+         
         np.random.seed(42)        
         self.MODEL_REPORT = {}
         for model_name, model in models.items():            
@@ -243,38 +245,6 @@ class Utils:
         logging.info('Dataset shape after resampling: {}'.format(data.shape[0]))
         return data
 
-    def connect_database(self, uri):
-        """
-        The connect_database function establishes a connection to the MongoDB database.
-        
-        :param uri: str: URI of mongodb atlas database
-        :return: MongoClient: A mongoclient object
-        """       
-        # uri = "mongodb+srv://root:root@cluster0.k3s4vuf.mongodb.net/?retryWrites=true&w=majority&ssl=true"
-
-        client = MongoClient(uri)
-        try:
-            client.admin.command('ping')
-            logging.info("MongoDb connection established successfully")
-            return client
-        except Exception as e:
-            logging.error("Exception occured during creating database connection")
-            raise CustomException(e, sys)
-
-    def get_data_from_database(self, uri, collection):
-        """
-        The get_data_from_database function takes in a uri and collection name, connects to the database, 
-        and returns a pandas dataframe of the data from that collection.
-
-        :param uri: str: MongoDB database URI
-        :param collection: str: Database name along with Collection e.g. "credit_card_defaults/data"
-        :return: DataFrame: A pandas dataframe
-        """
-        collection = collection.split("/")
-        client = self.connect_database(uri)
-        collection = client[collection[0]][collection[1]]
-        data = list(collection.find())
-        return pd.DataFrame(data)
 
 
 if __name__ == "__main__":
