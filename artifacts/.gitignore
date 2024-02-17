@@ -4,3 +4,4 @@ artifacts\preprocessor.pkl.dvc/raw.csv
 /val.csv
 /preprocessor.pkl
 /raw.csv
+/model.pkl.gz
