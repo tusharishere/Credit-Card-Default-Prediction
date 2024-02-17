@@ -117,6 +117,8 @@ class DataTransformation:
             target_column_name = 'default.payment.next.month'
             drop_columns = [target_column_name, 'ID']
 
+
+
             input_feature_train_df = train_df.drop(columns=drop_columns, axis=1)if 'ID' in train_df.columns else train_df
             target_feature_train_df = train_df[target_column_name]
 
@@ -125,6 +127,8 @@ class DataTransformation:
 
             input_feature_val_df = val_df.drop(columns=drop_columns, axis=1)if 'ID' in val_df.columns else val_df
             target_feature_val_df = val_df[target_column_name]
+
+            
 
             # Apply transformation
             preprocessing_obj = self.transform_data()
