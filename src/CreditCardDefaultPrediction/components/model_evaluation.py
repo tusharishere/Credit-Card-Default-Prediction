@@ -37,7 +37,11 @@ class ModelEvaluation:
             model_path = os.path.join("artifacts", "model.pkl.gz")
             model = Utils().load_object(model_path)
 
-            with mlflow.start_run(run_id=mlflow_setup.get_active_run_id(), nested=True):
+            mlflow.set_registry_uri("https://dagshub.com/tusharishere/Credit-Card-Default-Prediction.mlflow")
+            tracking_url_type_store = urlparse(mlflow.get_tracking_uri()).scheme
+            print(tracking_url_type_store)
+            
+            with mlflow.start_run():
                 
                 mlflow.set_tag("Best Model", str(model).split("(")[0])
                 
@@ -54,9 +58,14 @@ class ModelEvaluation:
                 mlflow.log_metric("precision score", precision)
                 mlflow.log_metric("recall score", recall)
                 mlflow.log_metric("roc_auc score", roc_auc)
-                mlflow.end_run()
 
-                mlflow.sklearn.log_model(model, "model")
+                # This condition is for dagshub
+                if tracking_url_type_store != "file":
+                    mlflow.sklearn.log_model(model, "model", registered_model_name="ml_model")
+                # This condition is for local    
+                else:
+                    mlflow.sklearn.log_model(model, "model")
+
                 
         except Exception as e:
             raise CustomException(e, sys)
