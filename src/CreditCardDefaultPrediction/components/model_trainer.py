@@ -45,54 +45,44 @@ class ModelTrainer:
                 test_dataframe.iloc[:, -1])
             
             models = {
-                     'XGBClassifier': XGBClassifier(),
-                     'DecisionTree': DecisionTreeClassifier(),
-                     'SVC': SVC(),
-                     'LogisticRegression': LogisticRegression(),
-                     'KNeighborsClassifier': KNeighborsClassifier(),
-                     'GradientBoostingClassifier': GradientBoostingClassifier(),
-                    'RandomForestClassifier': RandomForestClassifier()
-                 }
+                'XGBClassifier': (XGBClassifier(), {
+                    'learning_rate': [0.01, 0.05, 0.1],
+                    'max_depth': [3, 4, 5],
+                    'min_child_weight': [1, 2, 3],
+                    'gamma': [0.0, 0.1, 0.2],
+                    'colsample_bytree': [0.7, 0.8, 0.9]
+                }),
+                'DecisionTreeClassifier': (DecisionTreeClassifier(), {
+                    'max_depth': [5, 10, 15],
+                    'min_samples_split': [0.05, 0.1, 0.2]
+                }),
+                'SVC': (SVC(), {
+                    'C': [0.1, 0.5, 1],
+                    'kernel': ['rbf']
+                }),
+                'LogisticRegression': (LogisticRegression(), {
+                    'C': [0.01, 0.1, 1]
+                }),
+                'KNeighborsClassifier': (KNeighborsClassifier(), {
+                    'n_neighbors': [5, 10, 20, 30],
+                    'weights': ['uniform'],
+                    'metric': ['manhattan', 'minkowski']
+                }),
+                'GradientBoostingClassifier': (GradientBoostingClassifier(), {
+                    'n_estimators': [10, 20, 30],
+                    'max_depth': [3, 5, 7],
+                    'min_samples_split': [2, 5, 10],
+                    'min_samples_leaf': [1, 2, 5],
+                    'max_features': [5, 10, 15]
+                }),
+                'RandomForestClassifier': (RandomForestClassifier(), {
+                    'n_estimators': [50, 100, 150],
+                    'max_depth': [10, 20, 30]
+                })
+            }
             
-            """models = {
-                    'XGBClassifier': (XGBClassifier(), {
-                                'learning_rate': [0.05, 0.10, 0.15, 0.20, 0.25, 0.30],
-                                'max_depth': [3, 4, 5, 6, 8, 10, 12, 15],
-                                'min_child_weight': [1, 3, 5, 7],
-                                'gamma': [0.0, 0.1, 0.2, 0.3, 0.4],
-                                'colsample_bytree': [0.3, 0.4, 0.5, 0.7]}),
-                    'DecisionTreeClassifier': (DecisionTreeClassifier(), {
-                                         'max_depth': [20, 30, 50, 100], 
-                                         'min_samples_split': [0.1, 0.2, 0.4]
-                                         }),
-                    'SVC': (SVC(), {
-                            'C': [2, 5, 10], 
-                            'kernel': ['rbf', 'poly']}),
-                    'LogisticRegression': (LogisticRegression(), {
-                                            'penalty': ['l1', 'l2'], 
-                                            'C': [0.001, 0.01, 0.1, 1, 10, 100, 1000]}),
-                    'KNeighborsClassifier': (KNeighborsClassifier(), {
-                                        'n_neighbors': [2, 5, 15, 30],
-                                        'weights': ['uniform', 'distance'],
-                                        'metric': ['minkowski', 'euclidean', 'manhattan'],
-                                        "algorithm": ["auto", "ball_tree", "kd_tree", "brute"]}),
-                    'GradientBoostingClassifier': (GradientBoostingClassifier(), { 
-                                        'n_estimators': [5, 10, 15],
-                                        'max_depth': [5, 10, 20],
-                                        'min_samples_split': [10, 20, 30],
-                                        'min_samples_leaf': [10, 20, 30],
-                                        'max_features': [5, 10, 40]
-                                        }),
-                    'RandomForestClassifier': (RandomForestClassifier(),  {
-                                    'n_estimators': [5, 10, 15, 30], 
-                                    'max_depth': [5, 20, 50, 100]})
-                    }"""
-
-            # model evaluation without any hyper-paramter tuning            
-            best_model = self.utils.evaluate_models(models, X_train, y_train, X_test, y_test, metric="roc_auc")
-            
-            # model evaluation along with hyper-paramter tuning
-            #best_model = self.utils.evaluate_models_with_hyperparameter(models, X_train, y_train, X_test, y_test, metric="roc_auc", verbose=0)
+            # model evaluation along with hyper-parameter tuning
+            best_model = self.utils.evaluate_models(models, X_train, y_train, X_test, y_test, metric="roc_auc", verbose=0)
             
             self.utils.save_object(
                  file_path=self.model_trainer_config.trained_model_obj_path,
